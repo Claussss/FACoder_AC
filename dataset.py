@@ -6,6 +6,7 @@ from tqdm import tqdm
 import torchaudio
 import torchaudio.transforms as T
 from torch.utils.data import DataLoader
+from torch.utils.data import Subset
 
 
 class AudioDataset(Dataset):
@@ -140,3 +141,49 @@ class LatentDataset(Dataset):
         indices_input = self.precomputed_data[idx][2] 
         indices_target = self.precomputed_data[idx][3]
         return h_input, h_target, indices_input, indices_target
+    
+def create_train_valid_loaders(latent_dataset, valid_size, train_size, batch_size, seed=42):
+    """
+    Splits the dataset into fixed validation and dynamic training sets.
+
+    Args:
+        latent_dataset (Dataset): The complete dataset.
+        valid_size (int): Number of samples in the validation set.
+        train_size (int): Number of samples in the training set.
+        batch_size (int): Batch size for DataLoaders.
+        seed (int, optional): Random seed for reproducibility. Defaults to 42.
+
+    Returns:
+        train_loader (DataLoader): DataLoader for the training set.
+        valid_loader (DataLoader): DataLoader for the validation set.
+    """
+    dataset_length = len(latent_dataset)
+    
+    # Assertions to ensure valid sizes
+    assert valid_size <= dataset_length, f"Validation size ({valid_size}) cannot exceed dataset size ({dataset_length})."
+    assert train_size <= (dataset_length - valid_size), (
+        f"Train size ({train_size}) cannot exceed the remaining dataset size ({dataset_length - valid_size}) after validation split."
+    )
+    assert train_size >= 1, "Train size must be at least 1."
+
+    # Set the random seed for reproducibility
+    torch.manual_seed(seed)
+
+    # Generate a shuffled list of indices
+    shuffled_indices = torch.randperm(dataset_length).tolist()
+
+    # Select validation indices (fixed subset)
+    valid_indices = shuffled_indices[:valid_size]
+
+    # Select training indices from the remaining indices
+    train_indices = shuffled_indices[valid_size:valid_size + train_size]
+
+    # Create Subsets
+    train_subset = Subset(latent_dataset, train_indices)
+    valid_subset = Subset(latent_dataset, valid_indices)
+
+    # Create DataLoaders
+    train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True)
+    valid_loader = DataLoader(valid_subset, batch_size=batch_size, shuffle=False)
+
+    return train_loader, valid_loader
