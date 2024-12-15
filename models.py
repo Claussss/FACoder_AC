@@ -136,6 +136,7 @@ class ACModel(nn.Module):
         assert dummy_output.shape == dummy_input.shape, "Conversion submodule output shape does not match input shape"
 
     def forward(self, h_input):
+        "Returns whether e_c or z_c1 depending on the d_model"
         if self.d_model == 8:
             e_c = self.downsample(h_input)
             e_c = rearrange(e_c, "b t d -> b d t")
@@ -184,4 +185,16 @@ class ACModel(nn.Module):
         e_c = F.normalize(e_c, dim=-1, eps=1e-8)
         q_c = self.quantize(e_c)
         z_c1 = self.upsample(q_c)
+        return z_c1
+    
+    def inference(self, h_input):
+        "Always returns z_c1"
+        if self.d_model==256:
+            z_c1 = self.forward(h_input)
+        elif self.d_model==8:
+            e_c = self.forward(h_input)
+            e_c = F.normalize(e_c, dim=-1, eps=1e-8)
+            q_c = self.quantize(e_c)
+            z_c1 = self.upsample(q_c)
+            
         return z_c1
