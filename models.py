@@ -193,6 +193,7 @@ class ACModel(nn.Module):
             z_c1 = self.forward(h_input)
         elif self.d_model==8:
             e_c = self.forward(h_input)
+            e_c = rearrange(e_c, "b d t -> b t d")
             e_c = F.normalize(e_c, dim=-1, eps=1e-8)
             q_c = self.quantize(e_c)
             z_c1 = self.upsample(q_c)
