@@ -57,11 +57,12 @@ def plot_losses(train_losses, valid_losses, validation_interval):
     # Show the plot
     plt.show()
 
-def load_prepare_audio(audio_path, sr=16000, target_lenght=3.4):
+def load_prepare_audio(audio_path, sr=16000, target_lenght=3.4, tensor=True):
   target_lenght_samples = int(target_lenght * sr)
   audio, _ = librosa.load(audio_path, sr=sr)
   audio =  librosa.util.fix_length(audio, size=target_lenght_samples)
-  audio = torch.from_numpy(audio).float().unsqueeze(0).unsqueeze(0)
+  if tensor:
+    audio = torch.from_numpy(audio).float().unsqueeze(0).unsqueeze(0)
   return audio
 
 def unprepare_audio(audio_tensor):
