@@ -129,7 +129,9 @@ def precompute_latents_in_batches(audio_dataset, fa_encoder, fa_decoder, batch_s
 class LatentDataset(Dataset):
     def __init__(self, path_to_precomputed_latent_dataset):
         # a list of tuples: ((h_input, z_c_synth, input_indx, target_indx), ...)
-        self.precomputed_data = torch.load(path_to_precomputed_latent_dataset)  
+        self.precomputed_data = torch.load(path_to_precomputed_latent_dataset)
+        transript_path = '/content/drive/MyDrive/ECE537_Final/data/RRBI/transcripts_normalized.json'
+        self.normalized_transcripts = torch.load(transript_path)  
 
     def __len__(self):
         return len(self.precomputed_data)
@@ -140,7 +142,8 @@ class LatentDataset(Dataset):
         # shape: (2, T), first row c1, second row c2
         indices_input = self.precomputed_data[idx][2] 
         indices_target = self.precomputed_data[idx][3]
-        return h_input, h_target, indices_input, indices_target
+        transcript = self.normalized_transcripts[idx]
+        return h_input, h_target, indices_input, indices_target, transcript
     
 def create_train_valid_loaders(latent_dataset, valid_size, train_size, batch_size, seed=42):
     """
